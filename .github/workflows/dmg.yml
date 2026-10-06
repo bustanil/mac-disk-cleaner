@@ -1,0 +1,62 @@
+name: Build DMG
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  dmg:
+    runs-on: macos-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Build release
+        run: swift build -c release --product DiskCleaner
+
+      - name: Package app and DMG
+        run: |
+          set -euo pipefail
+          BIN="$(find .build -type f -path '*/release/DiskCleaner' ! -path '*.app/*' -print -quit)"
+          test -n "$BIN"
+          APP="dist/DiskCleaner.app"
+          rm -rf dist
+          mkdir -p "$APP/Contents/MacOS"
+          cp "$BIN" "$APP/Contents/MacOS/DiskCleaner"
+          chmod +x "$APP/Contents/MacOS/DiskCleaner"
+          cat > "$APP/Contents/Info.plist" <<'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>DiskCleaner</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.bustanil.diskcleaner</string>
+            <key>CFBundleName</key>
+            <string>Disk Cleaner</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>LSMinimumSystemVersion</key>
+            <string>14.0</string>
+          </dict>
+          </plist>
+          EOF
+          codesign --force --sign - "$APP"
+          ln -s /Applications dist/Applications
+          hdiutil create -volname "Disk Cleaner" -srcfolder dist -ov -format UDZO dist/DiskCleaner.dmg
+          ls -lh dist/DiskCleaner.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: DiskCleaner
+          path: dist/DiskCleaner.dmg
+          if-no-files-found: error
