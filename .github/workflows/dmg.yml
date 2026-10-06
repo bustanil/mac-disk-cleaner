@@ -26,9 +26,11 @@ jobs:
           test -n "$BIN"
           APP="dist/DiskCleaner.app"
           rm -rf dist
-          mkdir -p "$APP/Contents/MacOS"
+          mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
           cp "$BIN" "$APP/Contents/MacOS/DiskCleaner"
           chmod +x "$APP/Contents/MacOS/DiskCleaner"
+          chmod +x scripts/make-icns.sh
+          scripts/make-icns.sh app-icon.png "$APP/Contents/Resources/AppIcon.icns"
           cat > "$APP/Contents/Info.plist" <<'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -36,6 +38,8 @@ jobs:
           <dict>
             <key>CFBundleExecutable</key>
             <string>DiskCleaner</string>
+            <key>CFBundleIconFile</key>
+            <string>AppIcon</string>
             <key>CFBundleIdentifier</key>
             <string>com.bustanil.diskcleaner</string>
             <key>CFBundleName</key>

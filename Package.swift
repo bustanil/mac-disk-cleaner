@@ -11,7 +11,8 @@ let package = Package(
         .target(name: "DiskCleanerCore"),
         .executableTarget(
             name: "DiskCleaner",
-            dependencies: ["DiskCleanerCore"]
+            dependencies: ["DiskCleanerCore"],
+            resources: [.copy("Resources/app-icon.png")]
         ),
         .executableTarget(
             name: "DiskCleanerTests",
